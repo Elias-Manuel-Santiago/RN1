@@ -1,21 +1,85 @@
-import { BottomSheet, Button, Column, Host, Text } from '@expo/ui';
+import { Modal, ScrollView, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/providers/theme-provider';
+import { hardShadow, metrics } from '@/theme';
+import { Action, Actions, Card, Copy, Feedback } from './ui';
 
-export function DeleteConfirmation({ open, busy, title, description, error, onCancel, onConfirm }: {
-  open: boolean; busy: boolean; title: string; description: string; error?: string;
-  onCancel: () => void; onConfirm: () => void;
+export function DeleteConfirmation({
+  open,
+  busy,
+  title,
+  description,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  busy: boolean;
+  title: string;
+  description: string;
+  error?: string;
+  onCancel: () => void;
+  onConfirm: () => void;
 }) {
-  const { mode, colors } = useTheme();
-  return <Host style={{ position: 'absolute' }} pointerEvents="box-none" colorScheme={mode} seedColor={colors.danger}>
-    <BottomSheet isPresented={open} onDismiss={() => { if (!busy) onCancel(); }}
-      shouldDismissOnBackPress={!busy} shouldDismissOnClickOutside={!busy} containerColor={colors.surface}>
-      <Column style={{ padding: 24, backgroundColor: colors.surface }}>
-        <Text textStyle={{ fontSize: 22, fontWeight: '700', color: colors.text }}>{title}</Text>
-        <Text textStyle={{ fontSize: 16, color: colors.text }} style={{ paddingVertical: 16 }}>{description}</Text>
-        {error ? <Text textStyle={{ color: colors.danger }}>{error}</Text> : null}
-        <Button label={busy ? 'Eliminando…' : 'Eliminar definitivamente'} onPress={onConfirm} disabled={busy} />
-        <Button label="Cancelar" variant="text" onPress={onCancel} disabled={busy} />
-      </Column>
-    </BottomSheet>
-  </Host>;
+  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        if (!busy) onCancel();
+      }}
+    >
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 20,
+            paddingTop: Math.max(20, insets.top),
+            paddingBottom: Math.max(20, insets.bottom),
+          }}
+        >
+          <View
+            accessibilityViewIsModal
+            style={{ width: '100%', maxWidth: metrics.dialogWidth }}
+          >
+            <Card
+              style={{
+                padding: Math.min(36, Math.max(24, width * 0.05)),
+                boxShadow: hardShadow(colors.shadow, 9),
+              }}
+            >
+              <Copy title style={{ fontSize: 24, lineHeight: 28.8 }}>
+                {title}
+              </Copy>
+              <Copy>{description}</Copy>
+              <Feedback error={error} />
+              <Actions dialog>
+                <Action
+                  label="Cancelar"
+                  secondary
+                  compact
+                  onPress={onCancel}
+                  disabled={busy}
+                />
+                <Action
+                  label={busy ? 'Eliminando…' : 'Eliminar definitivamente'}
+                  danger
+                  compact
+                  onPress={onConfirm}
+                  disabled={busy}
+                />
+              </Actions>
+            </Card>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
 }

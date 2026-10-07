@@ -1,15 +1,15 @@
-import crypto from "node:crypto";
-import connection from "./db.js";
+import crypto from 'node:crypto';
+import connection from './db.js';
 
-const TIPO_VERIFICACION_EMAIL = "verificacion_email";
+const TIPO_VERIFICACION_EMAIL = 'verificacion_email';
 const DURACION_CODIGO_MS = 60 * 1000;
 
 function crearCodigo() {
-  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
 function hashearCodigo(codigo) {
-  return crypto.createHash("sha256").update(codigo).digest("hex");
+  return crypto.createHash('sha256').update(codigo).digest('hex');
 }
 
 /** Crea un código nuevo e invalida los códigos anteriores del mismo usuario. */
@@ -20,13 +20,13 @@ export async function crearCodigoVerificacion(usuarioId) {
     `UPDATE tokens_autenticacion
      SET used_at = UTC_TIMESTAMP()
      WHERE usuario_id = ? AND tipo = ? AND used_at IS NULL`,
-    [usuarioId, TIPO_VERIFICACION_EMAIL]
+    [usuarioId, TIPO_VERIFICACION_EMAIL],
   );
 
   await connection.query(
     `INSERT INTO tokens_autenticacion (usuario_id, tipo, token_hash, expires_at)
      VALUES (?, ?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 1 MINUTE))`,
-    [usuarioId, TIPO_VERIFICACION_EMAIL, hashearCodigo(codigo)]
+    [usuarioId, TIPO_VERIFICACION_EMAIL, hashearCodigo(codigo)],
   );
 
   return {
@@ -47,22 +47,23 @@ export async function verificarCodigoVerificacion(usuarioId, codigo) {
        AND expires_at > UTC_TIMESTAMP()
      ORDER BY created_at DESC
      LIMIT 1`,
-    [usuarioId, TIPO_VERIFICACION_EMAIL]
+    [usuarioId, TIPO_VERIFICACION_EMAIL],
   );
 
   const token = filas[0];
   if (!token || hashearCodigo(codigo) !== token.token_hash) {
-    return { success: false, message: "El código es incorrecto o expiró" };
+    return { success: false, message: 'El código es incorrecto o expiró' };
   }
 
   const [resultado] = await connection.query(
-    "UPDATE tokens_autenticacion SET used_at = UTC_TIMESTAMP() WHERE id = ? AND used_at IS NULL",
-    [token.id]
+    'UPDATE tokens_autenticacion SET used_at = UTC_TIMESTAMP() WHERE id = ? AND used_at IS NULL',
+    [token.id],
   );
-  if (resultado.affectedRows !== 1) return { success: false, message: 'El código es incorrecto o expiró' };
+  if (resultado.affectedRows !== 1)
+    return { success: false, message: 'El código es incorrecto o expiró' };
   await connection.query(
-    "UPDATE usuarios SET email_verified_at = UTC_TIMESTAMP() WHERE id = ?",
-    [usuarioId]
+    'UPDATE usuarios SET email_verified_at = UTC_TIMESTAMP() WHERE id = ?',
+    [usuarioId],
   );
 
   return { success: true };

@@ -1,0 +1,11 @@
+**/node_modules/**
+**/.expo/**
+**/dist/**
+**/dist-style-check/**
+**/build/**
+**/web-build/**
+**/coverage/**
+**/android/**
+**/ios/**
+**/package-lock.json
+**/expo-env.d.ts

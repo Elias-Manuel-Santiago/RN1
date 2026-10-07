@@ -7,10 +7,14 @@ try {
     ['is_admin', 'is_admin TINYINT(1) NOT NULL DEFAULT 0'],
   ]) {
     const [columns] = await connection.query(
-      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = ?", [name]);
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = ?",
+      [name],
+    );
     if (!columns.length) {
       await connection.query(`ALTER TABLE usuarios ADD COLUMN ${definition}`);
       console.log(`Added ${name}`);
     }
   }
-} finally { await connection.end(); }
+} finally {
+  await connection.end();
+}
