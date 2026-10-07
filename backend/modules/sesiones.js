@@ -35,7 +35,7 @@ export async function obtenerUsuarioPorSesion(token) {
 
   const tokenHash = hashearToken(token);
   const [filas] = await connection.query(
-    `SELECT u.id, u.username, u.email, u.email_verified_at
+    `SELECT u.id, u.username, u.email, u.email_verified_at, u.profile_picture, u.is_admin
      FROM sesiones_usuario AS s
      INNER JOIN usuarios AS u ON u.id = s.usuario_id
      WHERE s.token_hash = ?
@@ -69,6 +69,18 @@ export async function revocarSesionesDeUsuario(usuarioId) {
   await connection.query(
     "UPDATE sesiones_usuario SET revoked_at = UTC_TIMESTAMP() WHERE usuario_id = ? AND revoked_at IS NULL",
     [usuarioId]
+  );
+}
+
+/** Conserva la sesión con la que se cambió la contraseña y revoca las demás. */
+export async function revocarOtrasSesionesDeUsuario(usuarioId, tokenActual) {
+  if (!/^[a-f0-9]{64}$/.test(tokenActual ?? "")) return;
+
+  await connection.query(
+    `UPDATE sesiones_usuario
+     SET revoked_at = UTC_TIMESTAMP()
+     WHERE usuario_id = ? AND token_hash <> ? AND revoked_at IS NULL`,
+    [usuarioId, hashearToken(tokenActual)]
   );
 }
 

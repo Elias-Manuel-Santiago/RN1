@@ -2,30 +2,39 @@
 import connection from "./db.js";
 import bcrypt from 'bcrypt';
 
-export async function obtenerPersonas() {
-  const [filas] = await connection.query("SELECT * FROM usuarios");
+const CAMPOS_USUARIO = "id, username, email, email_verified_at, profile_picture, is_admin";
+
+export async function obtenerPersonasParaAdmin(busqueda = "") {
+  const termino = busqueda.trim();
+  const [filas] = await connection.query(
+    `SELECT ${CAMPOS_USUARIO} FROM usuarios
+     WHERE username LIKE CONCAT('%', ?, '%') OR email LIKE CONCAT('%', ?, '%')
+     ORDER BY username ASC
+     LIMIT 100`,
+    [termino, termino]
+  );
   return filas;
 }
 
 export async function obtenerPersonaPorId(id) {
-  const [filas] = await connection.query("SELECT * FROM usuarios WHERE id = ?", [id]);
+  const [filas] = await connection.query(`SELECT ${CAMPOS_USUARIO} FROM usuarios WHERE id = ?`, [id]);
   return filas[0];
 }
 
 export async function obtenerPersonaPorEmail(email) {
-  const [filas] = await connection.query("SELECT * FROM usuarios WHERE email= ?", [email]);
+  const [filas] = await connection.query(`SELECT ${CAMPOS_USUARIO} FROM usuarios WHERE email= ?`, [email]);
   return filas[0];
 }
 
 export async function obtenerPersonaPorUsername(username) {
-  const [filas] = await connection.query("SELECT * FROM usuarios WHERE username = ?", [username]);
+  const [filas] = await connection.query(`SELECT ${CAMPOS_USUARIO} FROM usuarios WHERE username = ?`, [username]);
   return filas[0];
 }
 
 
 export async function login(identifier, password) {
   const [filas] = await connection.query(
-    "SELECT id, username, email, email_verified_at, password_hash FROM usuarios WHERE username = ? OR email = ?",
+    "SELECT id, username, email, email_verified_at, profile_picture, is_admin, password_hash FROM usuarios WHERE username = ? OR email = ?",
     [identifier, identifier]
   );
   if(filas.length === 0){
@@ -88,6 +97,33 @@ export async function actualizarPassword(id, datos) {
      SET password_hash = ?
      WHERE id = ?`,
     [passwordHash, id]
+  );
+  return resultado.affectedRows;
+}
+
+/** Comprueba la contraseña actual antes de guardar la nueva. */
+export async function actualizarPasswordConActual(id, passwordActual, passwordNueva) {
+  const [filas] = await connection.query("SELECT password_hash FROM usuarios WHERE id = ?", [id]);
+  if (!filas[0] || !(await bcrypt.compare(passwordActual, filas[0].password_hash))) {
+    return false;
+  }
+
+  await actualizarPassword(id, { password: passwordNueva });
+  return true;
+}
+
+export async function actualizarFotoPerfil(id, profilePicture) {
+  const [resultado] = await connection.query(
+    "UPDATE usuarios SET profile_picture = ? WHERE id = ?",
+    [profilePicture, id]
+  );
+  return resultado.affectedRows;
+}
+
+export async function convertirEnAdmin(email) {
+  const [resultado] = await connection.query(
+    "UPDATE usuarios SET is_admin = 1 WHERE email = ?",
+    [email]
   );
   return resultado.affectedRows;
 }

@@ -5,7 +5,7 @@ import { revocarSesionesDeUsuario } from "./sesiones.js";
 
 const TIPO_RESTABLECIMIENTO = "restablecimiento_password";
 const DURACION_ENLACE_MINUTOS = 15;
-const URL_FRONTEND = process.env.FRONTEND_URL ?? "http://localhost:5173";
+const URL_RECUPERACION = process.env.PASSWORD_RESET_URL ?? 'rn1://restablecer-contrasena';
 
 function crearToken() {
   return crypto.randomBytes(32).toString("hex");
@@ -31,7 +31,9 @@ export async function crearEnlaceRecuperacion(usuarioId) {
     [usuarioId, TIPO_RESTABLECIMIENTO, hashearToken(token)]
   );
 
-  return `${URL_FRONTEND}/restablecer-contrasena?token=${token}`;
+  const enlace = new URL(URL_RECUPERACION);
+  enlace.searchParams.set('token', token);
+  return enlace.toString();
 }
 
 /** Cambia la contraseña si el token es válido y revoca todas las sesiones previas. */

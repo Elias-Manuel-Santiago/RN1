@@ -7,8 +7,8 @@ const sender = {
 };
 const client = new MailtrapClient({
   token: process.env.MAIL_API_KEY,
-  sandbox: true,
-  testInboxId: 4903156,
+  sandbox: process.env.MAIL_SANDBOX !== 'false',
+  testInboxId: Number(process.env.MAIL_INBOX_ID ?? 4903156),
 });
 
 /** Envía el código de verificación de email mediante Mailtrap. */

@@ -4,8 +4,10 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --env-file-if-exists=.env server.js"
+    "test": "node --test tests/*.test.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "create-admin": "node --env-file-if-exists=.env scripts/createAdmin.js",
+    "migrate-profile": "node --env-file-if-exists=.env scripts/migrateProfile.js"
   },
   "keywords": [],
   "author": "",

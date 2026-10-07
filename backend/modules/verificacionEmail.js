@@ -55,10 +55,11 @@ export async function verificarCodigoVerificacion(usuarioId, codigo) {
     return { success: false, message: "El código es incorrecto o expiró" };
   }
 
-  await connection.query(
+  const [resultado] = await connection.query(
     "UPDATE tokens_autenticacion SET used_at = UTC_TIMESTAMP() WHERE id = ? AND used_at IS NULL",
     [token.id]
   );
+  if (resultado.affectedRows !== 1) return { success: false, message: 'El código es incorrecto o expiró' };
   await connection.query(
     "UPDATE usuarios SET email_verified_at = UTC_TIMESTAMP() WHERE id = ?",
     [usuarioId]
